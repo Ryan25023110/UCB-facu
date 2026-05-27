@@ -1,239 +1,330 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
-#include "caminho.h"
 
-Posicao *novaPos(int x, int y) {
+#ifndef EXPRESSAO_H
+#define EXPRESSAO_H
 
-    Posicao *p;
+typedef struct {
 
-    p = (Posicao *) malloc(sizeof(Posicao));
+    char posFixa[512];
+    char inFixa[512];
+    float Valor;
 
-    if (p == NULL)
-        return NULL;
+} Expressao;
 
-    p->X = x;
-    p->Y = y;
-    p->Proximo = NULL;
+char *getInFixa(char *Str);
+float getValor(char *Str);
 
-    return p;
+#endif
+
+#define MAX 512
+
+/* pilha numeros */
+
+typedef struct {
+
+    float v[MAX];
+    int topo;
+
+} Pilha;
+
+void iniciar(Pilha *p) {
+
+    p->topo = -1;
 }
 
-Comando *novoCmd(char c) {
+void push(Pilha *p, float n) {
 
-    Comando *cmd;
-
-    cmd = (Comando *) malloc(sizeof(Comando));
-
-    if (cmd == NULL)
-        return NULL;
-
-    cmd->Direcao = c;
-    cmd->Proximo = NULL;
-
-    return cmd;
+    p->v[++p->topo] = n;
 }
 
-int valido(char c) {
+float pop(Pilha *p) {
 
-    if (c == 'N' || c == 'S' || c == 'L' || c == 'O')
+    return p->v[p->topo--];
+}
+
+int vazia(Pilha *p) {
+
+    if(p->topo == -1)
         return 1;
 
     return 0;
 }
 
-Caminho *InicializarCaminho(const char *Sequencia, int xInicial, int yInicial) {
+/* pilha texto */
 
-    Caminho *c;
+typedef struct {
 
-    if (Sequencia == NULL)
-        return NULL;
+    char texto[MAX][MAX];
+    int topo;
 
-    c = (Caminho *) malloc(sizeof(Caminho));
+} PilhaStr;
 
-    if (c == NULL)
-        return NULL;
+void iniciarStr(PilhaStr *p) {
 
-    c->Inicio = novaPos(xInicial, yInicial);
+    p->topo = -1;
+}
 
-    if (c->Inicio == NULL) {
-        free(c);
-        return NULL;
-    }
+void pushStr(PilhaStr *p, char s[]) {
 
-    c->Historico = c->Inicio;
-    c->Fim = c->Inicio;
-    c->Instrucoes = NULL;
-    c->N = 0;
+    strcpy(p->texto[++p->topo], s);
+}
 
-    Comando *ultimo = NULL;
+char *popStr(PilhaStr *p) {
 
-    int i = 0;
+    return p->texto[p->topo--];
+}
 
-    while (Sequencia[i] != '\0') {
+int vaziaStr(PilhaStr *p) {
 
-        if (!valido(Sequencia[i])) {
-            DestruirCaminho(c);
-            return NULL;
+    if(p->topo == -1)
+        return 1;
+
+    return 0;
+}
+
+/* verifica operador */
+
+int operador(char s[]) {
+
+    if(strcmp(s, "+") == 0)
+        return 1;
+
+    if(strcmp(s, "-") == 0)
+        return 1;
+
+    if(strcmp(s, "*") == 0)
+        return 1;
+
+    if(strcmp(s, "/") == 0)
+        return 1;
+
+    if(strcmp(s, "%") == 0)
+        return 1;
+
+    if(strcmp(s, "^") == 0)
+        return 1;
+
+    return 0;
+}
+
+/* verifica funcao */
+
+int funcao(char s[]) {
+
+    if(strcmp(s, "log") == 0)
+        return 1;
+
+    if(strcmp(s, "sen") == 0)
+        return 1;
+
+    if(strcmp(s, "cos") == 0)
+        return 1;
+
+    if(strcmp(s, "tg") == 0)
+        return 1;
+
+    if(strcmp(s, "raiz") == 0)
+        return 1;
+
+    return 0;
+}
+
+/* graus para radianos */
+
+float rad(float g) {
+
+    return g * M_PI / 180;
+}
+
+/* calcula valor */
+
+float getValor(char *Str) {
+
+    Pilha p;
+
+    iniciar(&p);
+
+    char aux[MAX];
+
+    strcpy(aux, Str);
+
+    char *token = strtok(aux, " ");
+
+    while(token != NULL) {
+
+        /* numero */
+
+        if(!operador(token) && !funcao(token)) {
+
+            push(&p, atof(token));
         }
 
-        Comando *novo = novoCmd(Sequencia[i]);
+        /* operador */
 
-        if (novo == NULL) {
-            DestruirCaminho(c);
-            return NULL;
+        else if(operador(token)) {
+
+            if(p.topo < 1)
+                return NAN;
+
+            float b = pop(&p);
+            float a = pop(&p);
+
+            float r;
+
+            if(strcmp(token, "+") == 0)
+                r = a + b;
+
+            else if(strcmp(token, "-") == 0)
+                r = a - b;
+
+            else if(strcmp(token, "*") == 0)
+                r = a * b;
+
+            else if(strcmp(token, "/") == 0) {
+
+                if(b == 0)
+                    return NAN;
+
+                r = a / b;
+            }
+
+            else if(strcmp(token, "%") == 0) {
+
+                if((int)b == 0)
+                    return NAN;
+
+                r = (int)a % (int)b;
+            }
+
+            else
+                r = pow(a, b);
+
+            push(&p, r);
         }
 
-        if (c->Instrucoes == NULL)
-            c->Instrucoes = novo;
-        else
-            ultimo->Proximo = novo;
+        /* funcoes */
 
-        ultimo = novo;
+        else if(funcao(token)) {
 
-        c->N++;
+            if(vazia(&p))
+                return NAN;
 
-        i++;
+            float a = pop(&p);
+
+            float r;
+
+            if(strcmp(token, "log") == 0) {
+
+                if(a <= 0)
+                    return NAN;
+
+                r = log10(a);
+            }
+
+            else if(strcmp(token, "raiz") == 0) {
+
+                if(a < 0)
+                    return NAN;
+
+                r = sqrt(a);
+            }
+
+            else if(strcmp(token, "sen") == 0)
+                r = sin(rad(a));
+
+            else if(strcmp(token, "cos") == 0)
+                r = cos(rad(a));
+
+            else
+                r = tan(rad(a));
+
+            push(&p, r);
+        }
+
+        token = strtok(NULL, " ");
     }
 
-    HistoricoPosicoes(c);
+    if(p.topo != 0)
+        return NAN;
 
-    DeterminarFim(c);
-
-    return c;
+    return pop(&p);
 }
 
-Posicao *HistoricoPosicoes(Caminho *C) {
+/* converter infixa */
 
-    if (C == NULL)
+char *getInFixa(char *Str) {
+
+    PilhaStr p;
+
+    iniciarStr(&p);
+
+    static char resposta[MAX];
+
+    char aux[MAX];
+
+    strcpy(aux, Str);
+
+    char *token = strtok(aux, " ");
+
+    while(token != NULL) {
+
+        /* numero */
+
+        if(!operador(token) && !funcao(token)) {
+
+            pushStr(&p, token);
+        }
+
+        /* operador */
+
+        else if(operador(token)) {
+
+            if(p.topo < 1)
+                return NULL;
+
+            char b[MAX];
+            char a[MAX];
+            char temp[MAX];
+
+            strcpy(b, popStr(&p));
+            strcpy(a, popStr(&p));
+
+            sprintf(temp, "(%s%s%s)", a, token, b);
+
+            pushStr(&p, temp);
+        }
+
+        /* funcao */
+
+        else if(funcao(token)) {
+
+            if(vaziaStr(&p))
+                return NULL;
+
+            char a[MAX];
+            char temp[MAX];
+
+            strcpy(a, popStr(&p));
+
+            if(strcmp(token, "raiz") == 0)
+                sprintf(temp, "raiz(%s)", a);
+
+            else
+                sprintf(temp, "%s(%s)", token, a);
+
+            pushStr(&p, temp);
+        }
+
+        token = strtok(NULL, " ");
+    }
+
+    if(p.topo != 0)
         return NULL;
 
-    if (C->Historico != NULL && C->Historico->Proximo != NULL)
-        return C->Historico;
+    strcpy(resposta, popStr(&p));
 
-    int x = C->Inicio->X;
-    int y = C->Inicio->Y;
-
-    Posicao *fimLista = C->Inicio;
-
-    Comando *cmd = C->Instrucoes;
-
-    while (cmd != NULL) {
-
-        if (cmd->Direcao == 'N')
-            y++;
-        else if (cmd->Direcao == 'S')
-            y--;
-        else if (cmd->Direcao == 'L')
-            x++;
-        else if (cmd->Direcao == 'O')
-            x--;
-
-        Posicao *nova = novaPos(x, y);
-
-        if (nova == NULL)
-            return NULL;
-
-        fimLista->Proximo = nova;
-
-        fimLista = nova;
-
-        cmd = cmd->Proximo;
-    }
-
-    return C->Historico;
-}
-
-Posicao *DeterminarFim(Caminho *C) {
-
-    if (C == NULL)
-        return NULL;
-
-    Posicao *p = C->Historico;
-
-    while (p->Proximo != NULL) {
-        p = p->Proximo;
-    }
-
-    C->Fim = p;
-
-    return C->Fim;
-}
-
-int CalcularDistanciaTotal(Caminho *C) {
-
-    if (C == NULL)
-        return -1;
-
-    return C->N;
-}
-
-double CalcularDistanciaGeometrica(Caminho *C) {
-
-    if (C == NULL)
-        return -1.0;
-
-    Posicao *fim = DeterminarFim(C);
-
-    if (fim == NULL)
-        return -1.0;
-
-    int dx = fim->X - C->Inicio->X;
-    int dy = fim->Y - C->Inicio->Y;
-
-    return sqrt((dx * dx) + (dy * dy));
-}
-
-int CalcularDistanciaManhattan(Caminho *C) {
-
-    if (C == NULL)
-        return -1;
-
-    Posicao *fim = DeterminarFim(C);
-
-    if (fim == NULL)
-        return -1;
-
-    int x = abs(fim->X - C->Inicio->X);
-    int y = abs(fim->Y - C->Inicio->Y);
-
-    return x + y;
-}
-
-int ContarInstrucoes(Caminho *C) {
-
-    if (C == NULL)
-        return -1;
-
-    return C->N;
-}
-
-void DestruirCaminho(Caminho *C) {
-
-    if (C == NULL)
-        return;
-
-    Posicao *p = C->Historico;
-
-    while (p != NULL) {
-
-        Posicao *aux = p;
-
-        p = p->Proximo;
-
-        free(aux);
-    }
-
-    Comando *cmd = C->Instrucoes;
-
-    while (cmd != NULL) {
-
-        Comando *aux = cmd;
-
-        cmd = cmd->Proximo;
-
-        free(aux);
-    }
-
-    free(C);
-}
+    return resposta;
+} 
