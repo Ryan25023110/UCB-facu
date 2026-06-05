@@ -20,8 +20,7 @@ float getValor(char *Str);
 #endif
 
 #define MAX 512
-
-/* pilha numeros */
+#define PI 3.14159265358979323846
 
 typedef struct {
 
@@ -49,8 +48,6 @@ float pop(Pilha *p) {
 
     return p->v[p->topo--];
 }
-
-/* pilha strings */
 
 typedef struct {
 
@@ -83,7 +80,6 @@ char *popStr(PilhaStr *p, int *prioridade) {
     return p->texto[p->topo--];
 }
 
-/* verifica operador */
 
 int operador(char s[]) {
 
@@ -108,8 +104,6 @@ int operador(char s[]) {
     return 0;
 }
 
-/* verifica funcao */
-
 int funcao(char s[]) {
 
     if(strcmp(s, "log") == 0)
@@ -130,7 +124,6 @@ int funcao(char s[]) {
     return 0;
 }
 
-/* verifica numero */
 
 int numero(char s[]) {
 
@@ -140,8 +133,6 @@ int numero(char s[]) {
 
     return *fim == '\0';
 }
-
-/* prioridade operadores */
 
 int prioridade(char op[]) {
 
@@ -159,17 +150,14 @@ int prioridade(char op[]) {
     return 4;
 }
 
-/* graus para radianos */
+    float rad(float g) {
 
-float rad(float g) {
+    return g * PI / 180.0;
 
-    return g * M_PI / 180.0;
 }
 
-/* calcula valor */
-
-float getValor(char *Str) {
-
+float getValor(char *Str)
+{
     Pilha p;
 
     iniciar(&p);
@@ -182,14 +170,12 @@ float getValor(char *Str) {
 
     while(token != NULL) {
 
-        /* numero */
 
         if(numero(token)) {
 
             push(&p, atof(token));
         }
 
-        /* operador */
 
         else if(operador(token)) {
 
@@ -218,12 +204,16 @@ float getValor(char *Str) {
                 r = a / b;
             }
 
-            else if(strcmp(token, "%") == 0) {
+           else if(strcmp(token, "%") == 0) {
 
-                if((int)b == 0)
-                    return NAN;
+             if((int)b == 0)
+             return NAN;
 
-                r = (int)a % (int)b;
+            if(a != (int)a || b != (int)b)
+            return NAN;
+
+             r = (int)a % (int)b;
+
             }
 
             else {
@@ -234,7 +224,6 @@ float getValor(char *Str) {
             push(&p, r);
         }
 
-        /* funcao */
 
         else if(funcao(token)) {
 
@@ -279,7 +268,6 @@ float getValor(char *Str) {
             push(&p, r);
         }
 
-        /* token invalido */
 
         else {
 
@@ -292,95 +280,73 @@ float getValor(char *Str) {
     if(p.topo != 0)
         return NAN;
 
-    return pop(&p);
+  return pop(&p);
 }
 
-/* converte para infixa */
+char *getInFixa(char *Str)
+{
+    return NULL;
+    
+}
 
-char *getInFixa(char *Str) {
-
+char *getPreFixaInterna(char *Str)
+{
     PilhaStr p;
 
     iniciarStr(&p);
 
     static char resp[MAX];
-
     char aux[MAX];
 
     strcpy(aux, Str);
 
     char *token = strtok(aux, " ");
 
-    while(token != NULL) {
-
-        /* numero */
-
-        if(numero(token)) {
-
-            pushStr(&p, token, 4);
+    while(token != NULL)
+    {
+        if(numero(token))
+        {
+            pushStr(&p, token, 0);
         }
 
-        /* operador */
-
-        else if(operador(token)) {
-
+        else if(operador(token))
+        {
             if(p.topo < 1)
                 return NULL;
 
-            char a[MAX], b[MAX];
-            char esq[MAX], dir[MAX];
+            int p1, p2;
+
+            char a[MAX];
+            char b[MAX];
             char temp[MAX];
 
-            int pa, pb;
+            strcpy(b, popStr(&p, &p2));
+            strcpy(a, popStr(&p, &p1));
 
-            strcpy(b, popStr(&p, &pb));
-            strcpy(a, popStr(&p, &pa));
+            sprintf(temp, "%s %s %s", token, a, b);
 
-            strcpy(esq, a);
-            strcpy(dir, b);
-
-            int pAtual = prioridade(token);
-
-            if(pa < pAtual)
-                sprintf(esq, "(%s)", a);
-
-            if(pb < pAtual ||
-              ((strcmp(token, "-") == 0 ||
-                strcmp(token, "/") == 0 ||
-                strcmp(token, "^") == 0) &&
-                pb == pAtual)) {
-
-                sprintf(dir, "(%s)", b);
-            }
-
-            sprintf(temp, "%s%s%s", esq, token, dir);
-
-            pushStr(&p, temp, pAtual);
+            pushStr(&p, temp, 0);
         }
 
-        /* funcao */
-
-        else if(funcao(token)) {
-
+        else if(funcao(token))
+        {
             if(vaziaStr(&p))
                 return NULL;
+
+            int prio;
 
             char a[MAX];
             char temp[MAX];
 
-            int prio;
-
             strcpy(a, popStr(&p, &prio));
 
-            sprintf(temp, "%s(%s)", token, a);
+            sprintf(temp, "%s %s", token, a);
 
-            pushStr(&p, temp, 4);
+            pushStr(&p, temp, 0);
         }
 
-        /* token invalido */
-
-        else {
-
+        else
+        {
             return NULL;
         }
 
@@ -390,9 +356,11 @@ char *getInFixa(char *Str) {
     if(p.topo != 0)
         return NULL;
 
-    int prioFinal;
+    int pFinal;
 
-    strcpy(resp, popStr(&p, &prioFinal));
+    strcpy(resp, popStr(&p, &pFinal));
 
     return resp;
 }
+
+       
