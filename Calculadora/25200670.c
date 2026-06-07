@@ -285,8 +285,97 @@ float getValor(char *Str)
 
 char *getInFixa(char *Str)
 {
-    return NULL;
-    
+    PilhaStr p;
+
+    iniciarStr(&p);
+
+    static char resp[MAX];
+    char aux[MAX];
+
+    strcpy(aux, Str);
+
+    char *token = strtok(aux, " ");
+
+    while(token != NULL)
+    {
+        if(numero(token))
+        {
+            pushStr(&p, token, 4);
+        }
+
+        else if(operador(token))
+        {
+            if(p.topo < 1)
+                return NULL;
+
+            int pa, pb;
+
+            char a[MAX];
+            char b[MAX];
+            char temp[MAX];
+
+            strcpy(b, popStr(&p, &pb));
+            strcpy(a, popStr(&p, &pa));
+
+            int pAtual = prioridade(token);
+
+            char esq[MAX];
+            char dir[MAX];
+
+            if(pa < pAtual)
+                sprintf(esq, "(%s)", a);
+            else
+                strcpy(esq, a);
+
+            if(pb < pAtual ||
+              ((strcmp(token,"-")==0 ||
+                strcmp(token,"/")==0 ||
+                strcmp(token,"^")==0) && pb == pAtual))
+                sprintf(dir, "(%s)", b);
+            else
+                strcpy(dir, b);
+
+            sprintf(temp, "%s%s%s",
+                    esq,
+                    token,
+                    dir);
+
+            pushStr(&p, temp, pAtual);
+        }
+
+        else if(funcao(token))
+        {
+            if(vaziaStr(&p))
+                return NULL;
+
+            int prio;
+
+            char a[MAX];
+            char temp[MAX];
+
+            strcpy(a, popStr(&p, &prio));
+
+            sprintf(temp, "%s(%s)", token, a);
+
+            pushStr(&p, temp, 4);
+        }
+
+        else
+        {
+            return NULL;
+        }
+
+        token = strtok(NULL, " ");
+    }
+
+    if(p.topo != 0)
+        return NULL;
+
+    int pfinal;
+
+    strcpy(resp, popStr(&p, &pfinal));
+
+    return resp;
 }
 
 char *getPreFixaInterna(char *Str)
