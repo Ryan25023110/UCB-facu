@@ -323,7 +323,7 @@ char *getInFixa(char *Str)
             char dir[MAX];
 
             if(pa < pAtual)
-                sprintf(esq, "(%s)", a);
+              snprintf(esq, MAX, "(%s)", a);
             else
                 strcpy(esq, a);
 
@@ -331,14 +331,14 @@ char *getInFixa(char *Str)
               ((strcmp(token,"-")==0 ||
                 strcmp(token,"/")==0 ||
                 strcmp(token,"^")==0) && pb == pAtual))
-                sprintf(dir, "(%s)", b);
+                snprintf(dir, MAX, "(%s)", b);
             else
                 strcpy(dir, b);
 
-            sprintf(temp, "%s%s%s",
-                    esq,
-                    token,
-                    dir);
+           snprintf(temp, MAX, "%s%s%s",
+         esq,
+         token,
+         dir);
 
             pushStr(&p, temp, pAtual);
         }
@@ -355,7 +355,7 @@ char *getInFixa(char *Str)
 
             strcpy(a, popStr(&p, &prio));
 
-            sprintf(temp, "%s(%s)", token, a);
+            snprintf(temp, MAX, "%s(%s)", token, a);
 
             pushStr(&p, temp, 4);
         }
@@ -412,7 +412,7 @@ char *getPreFixaInterna(char *Str)
             strcpy(b, popStr(&p, &p2));
             strcpy(a, popStr(&p, &p1));
 
-            sprintf(temp, "%s %s %s", token, a, b);
+            snprintf(temp, MAX, "%s %s %s", token, a, b);
 
             pushStr(&p, temp, 0);
         }
@@ -429,7 +429,7 @@ char *getPreFixaInterna(char *Str)
 
             strcpy(a, popStr(&p, &prio));
 
-            sprintf(temp, "%s %s", token, a);
+            snprintf(temp, MAX, "%s %s", token, a);
 
             pushStr(&p, temp, 0);
         }
