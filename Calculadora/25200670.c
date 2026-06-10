@@ -3,21 +3,6 @@
 #include <string.h>
 #include <math.h>
 
-#ifndef EXPRESSAO_H
-#define EXPRESSAO_H
-
-typedef struct {
-
-    char posFixa[512];
-    char inFixa[512];
-    float Valor;
-
-} Expressao;
-
-char *getInFixa(char *Str);
-float getValor(char *Str);
-
-#endif
 
 #define MAX 512
 #define PI 3.14159265358979323846
@@ -39,7 +24,10 @@ int vazia(Pilha *p) {
     return p->topo == -1;
 }
 
-void push(Pilha *p, float n) {
+void push(Pilha *p, float n)
+{
+    if(p->topo >= MAX - 1)
+        return;
 
     p->v[++p->topo] = n;
 }
@@ -67,7 +55,10 @@ int vaziaStr(PilhaStr *p) {
     return p->topo == -1;
 }
 
-void pushStr(PilhaStr *p, char s[], int prioridade) {
+void pushStr(PilhaStr *p, char s[], int prioridade)
+{
+    if(p->topo >= MAX - 1)
+        return;
 
     strcpy(p->texto[++p->topo], s);
     p->prio[p->topo] = prioridade;
@@ -126,6 +117,7 @@ int funcao(char s[]) {
 
 
 int numero(char s[]) {
+
 
     char *fim;
 
@@ -198,7 +190,7 @@ float getValor(char *Str)
 
             else if(strcmp(token, "/") == 0) {
 
-                if(b == 0)
+                if(fabs(b) < 1e-9)
                     return NAN;
 
                 r = a / b;
@@ -206,15 +198,14 @@ float getValor(char *Str)
 
            else if(strcmp(token, "%") == 0) {
 
-             if((int)b == 0)
-             return NAN;
+    if((int)b == 0)
+        return NAN;
 
-            if(a != (int)a || b != (int)b)
-            return NAN;
+    if(a != (int)a || b != (int)b)
+        return NAN;
 
-             r = (int)a % (int)b;
-
-            }
+    r = (int)a % (int)b;
+}
 
             else {
 
@@ -262,7 +253,12 @@ float getValor(char *Str)
 
             else {
 
-                r = tan(rad(a));
+                double ang = rad(a);
+
+if(fabs(cos(ang)) < 1e-9)
+    return NAN;
+
+r = tan(ang);
             }
 
             push(&p, r);
