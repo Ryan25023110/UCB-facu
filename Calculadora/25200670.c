@@ -1,30 +1,12 @@
-/*
- * calculadora.c
- * Avaliador de expressoes pos-fixas
- * Estrutura de Dados - UCB 2026
- *
- * Compile com:
- *   gcc calculadora.c main.c -o calculadora.exe -lm
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-/* -------------------------------------------------------
- * CORRECAO 1: incluir o proprio header conforme exigido
- * pelo enunciado (estrutura do projeto).
- * Descomente a linha abaixo ao usar com o projeto real:
- * #include "calculadora.h"
- * ------------------------------------------------------- */
 
 #define MAX 512
 #define PI 3.14159265358979323846
 
-/* =======================================================
- *  PILHA DE FLOATS  (para getValor)
- * ======================================================= */
 typedef struct {
     float v[MAX];
     int   topo;
@@ -44,15 +26,9 @@ static float pop(Pilha *p)
     return p->v[p->topo--];
 }
 
-/* =======================================================
- *  PILHA DE STRINGS  (para getInFixa)
- *
- *  CORRECAO 2: texto alocado no heap para evitar
- *  stack overflow (512*512 = 256 KB na stack causava
- *  crash em alguns compiladores/SO).
- * ======================================================= */
+
 typedef struct {
-    char *texto[MAX];   /* ponteiros para strings alocadas */
+    char *texto[MAX]; 
     int   prio [MAX];
     int   topo;
 } PilhaStr;
@@ -63,7 +39,7 @@ static void iniciarStr(PilhaStr *p)
     memset(p->texto, 0, sizeof(p->texto));
 }
 
-/* Libera toda a memoria da pilha */
+
 static void liberarStr(PilhaStr *p)
 {
     for (int i = 0; i <= p->topo; i++) {
@@ -83,24 +59,16 @@ static void pushStr(PilhaStr *p, const char *s, int prioridade)
     p->prio [  p->topo] = prioridade;
 }
 
-/*
- * CORRECAO 3: popStr agora devolve a string e transfere
- * a propriedade — o chamador deve chamar free() depois.
- * Isso elimina o risco de ponteiro obsoleto quando o
- * proximo push sobrescreve a mesma posicao.
- */
+
 static char *popStr(PilhaStr *p, int *prioridade)
 {
     *prioridade    = p->prio[p->topo];
     char *ret      = p->texto[p->topo];
     p->texto[p->topo] = NULL;
     p->topo--;
-    return ret;   /* chamador e responsavel pelo free() */
+    return ret;  
 }
 
-/* =======================================================
- *  FUNCOES AUXILIARES DE CLASSIFICACAO
- * ======================================================= */
 static int ehOperador(const char *s)
 {
     return (strcmp(s,"+") == 0 || strcmp(s,"-") == 0 ||
@@ -122,10 +90,7 @@ static int ehNumero(const char *s)
     return (*fim == '\0' && fim != s);   /* CORRECAO 4: rejeita string vazia */
 }
 
-/*
- * Prioridade dos operadores binarios.
- * Retorna valor usado na logica de parentesizacao.
- */
+
 static int prioOp(const char *op)
 {
     if (strcmp(op,"+") == 0 || strcmp(op,"-") == 0) return 1;
@@ -137,9 +102,7 @@ static int prioOp(const char *op)
 
 static float toRad(float g) { return g * (float)PI / 180.0f; }
 
-/* =======================================================
- *  getValor  —  avalia expressao pos-fixa
- * ======================================================= */
+
 float getValor(char *Str)
 {
     if (!Str) return NAN;
@@ -164,7 +127,7 @@ float getValor(char *Str)
         /* --- operador binario --- */
         else if (ehOperador(token))
         {
-            if (p.topo < 1)          /* precisa de pelo menos 2 operandos */
+            if (p.topo < 1)         
                 return NAN;
 
             float b = pop(&p);
@@ -189,7 +152,7 @@ float getValor(char *Str)
             push(&p, r);
         }
 
-        /* --- funcao unaria --- */
+     
         else if (ehFuncao(token))
         {
             if (vazia(&p)) return NAN;
@@ -198,11 +161,11 @@ float getValor(char *Str)
             float r;
 
             if (strcmp(token,"log") == 0) {
-                if (a <= 0.0f) return NAN;           /* log de nao-positivo */
+                if (a <= 0.0f) return NAN;           
                 r = (float)log10(a);
             }
             else if (strcmp(token,"raiz") == 0) {
-                if (a < 0.0f) return NAN;            /* raiz de negativo */
+                if (a < 0.0f) return NAN;          
                 r = (float)sqrt(a);
             }
             else if (strcmp(token,"sen") == 0)
@@ -218,7 +181,7 @@ float getValor(char *Str)
             push(&p, r);
         }
 
-        /* --- token desconhecido --- */
+        
         else
             return NAN;
 
@@ -262,7 +225,7 @@ char *getInFixa(char *Str)
 
             int pAtual = prioOp(token);
 
-            /* decide se precisa de parenteses em cada lado */
+          
             int parenEsq = (pa < pAtual);
             int parenDir = (pb < pAtual) ||
                            ((pb == pAtual) &&
@@ -314,7 +277,7 @@ char *getInFixa(char *Str)
             free(temp);
         }
 
-        /* --- token desconhecido --- */
+      
         else
         {
             liberarStr(&p);
