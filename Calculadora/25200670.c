@@ -118,13 +118,12 @@ float getValor(char *Str)
 
     while (token != NULL)
     {
-        /* --- operando numerico --- */
+     
         if (ehNumero(token))
         {
             push(&p, (float)atof(token));
         }
 
-        /* --- operador binario --- */
         else if (ehOperador(token))
         {
             if (p.topo < 1)         
